@@ -1,0 +1,173 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <Servo.h>
+
+Servo myservo;
+
+void setup()
+{
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+  pinMode(4, INPUT_PULLUP);
+  pinMode(5, INPUT_PULLUP);
+  pinMode(6, INPUT_PULLUP);
+  pinMode(7, INPUT_PULLUP);
+  pinMode(8, INPUT_PULLUP);
+  pinMode(9, INPUT_PULLUP);
+  
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
+  
+  pinMode(A4, INPUT_PULLUP);
+  pinMode(A5, INPUT_PULLUP);
+  
+  myservo.attach(10);
+  myservo.write(0);
+  
+  Serial.begin(9600);
+  
+  Serial.println("INSIRA A SENHA");
+  IniciaTentativa();
+}
+
+//variaveis:
+int senha[6] = {1, 1, 1, 1, 1, 1}, erros = 0, aux = -1, trancar = 0, servo = 0, digito = -2, i, acertos = 0;
+int *tentativa = (int *)malloc(7*sizeof(int));
+int contagem = 0;
+
+//preenche a tentativa de senha com -1 para diferenciar de uma tentativa com os botoes
+
+void IniciaTentativa(){
+for(i = 1; i<7; i++){
+   tentativa[i] = -1;
+   }
+}
+
+//preenhe numero do botao na tentativa
+void PreencheTentativa(int digito, int contagem){
+  
+  if(digito == -1 && aux != contagem){
+  IniciaTentativa();
+  Serial.println("INSIRA A SENHA");
+  digito = -2;
+  }else
+    tentativa[contagem] = digito;
+  
+  if(aux != contagem){
+  
+  for(int a = 1; a<7; a++){
+    
+    if(tentativa[a] != -1){
+      Serial.print(tentativa[a]);
+      Serial.print(" ");
+    }
+  	else
+      Serial.print("X ");
+  }
+  
+  Serial.println();
+  }
+  aux = contagem;
+}
+
+void loop()
+{
+  delay(500);
+ 
+ if(trancar == 1 && analogRead(A5)<200){
+   myservo.write(0);
+   Serial.println("COFRE TRANCADO. <3");
+   tone(11, 2093);
+   delay(300);
+   tone(11, 1046.5);
+   delay(200);
+   noTone(11);
+   delay(4000);
+   trancar = 0;
+   IniciaTentativa();
+   Serial.println("INSIRA A SENHA");
+ }
+  
+ //executa o codigo se o cofre estiver trancado
+ if(trancar == 0){
+   
+ //le qual botao foi pressionado
+ if(!digitalRead(9)){digito = 1;contagem++;}
+ if(!digitalRead(8)){digito = 2;contagem++;}
+ if(!digitalRead(7)){digito = 3;contagem++;}
+ if(!digitalRead(6)){digito = 4;contagem++;}
+ if(!digitalRead(5)){digito = 5;contagem++;}
+ if(!digitalRead(4)){digito = 6;contagem++;}
+ if(!digitalRead(3)){digito = 7;contagem++;}
+ if(!digitalRead(2)){digito = 0;contagem++;}
+  
+ if(analogRead(A4)<250){digito = -1;contagem=0;}
+ 
+ if(contagem>6){
+   contagem = 0;
+   IniciaTentativa();
+   Serial.println("INSIRA A SENHA");}
+ 
+ PreencheTentativa(digito, contagem);
+ 
+   if(tentativa[6] != -1){
+ for(i = 0; i<6; i++){
+   if(senha[i] == tentativa[i+1]){
+   acertos++;
+   }
+ }
+}
+
+ if(acertos == 6){
+   noTone(11);
+   myservo.write(180);
+   tone(11, 1046.5);
+   delay(300);
+   tone(11, 2093);
+   delay(200);
+   noTone(11);
+   
+   Serial.println("SENHA CORRETA.<3");
+   delay(4000);
+   
+   IniciaTentativa();
+   
+   erros = 0;
+   contagem = 0;
+   acertos = 0;
+   trancar = 1;
+   
+   Serial.println("COFRE ABERTO");
+ }
+ 
+ if(acertos < 6 && tentativa[6] != -1){
+   Serial.println("SENHA INCORRETA.");
+   Serial.print(2-erros);
+   if(erros != 1){
+     Serial.println(" TENTATIVAS...");}
+   else{
+     Serial.println(" TENTATIVA...");}
+   
+   tone(11, 587.32);
+   delay(2000);
+   noTone(11);
+   IniciaTentativa();
+   contagem = 0;
+   erros++;
+   acertos = 0;
+   if(erros != 3){Serial.println("INSIRA A SENHA");}
+ }
+ 
+ if(erros == 3){
+   Serial.println("SENHA INCORRETA MULTIPLAS VEZES.");
+   delay(2000);
+   tone(11, 587.32);
+   IniciaTentativa();
+   Serial.println("INSIRA A SENHA");
+   contagem = 0;
+   erros = 2;
+   acertos = 0;
+ }
+ }
+}
