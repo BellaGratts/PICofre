@@ -1,0 +1,39 @@
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <SoftwareSerial.h>
+
+char auth[] = "dEVSB1HVqVocR2vOS_QmzhsX5t1ogwwe";
+
+char ssid[] = "MARCIA_2.4G";
+char pass[] = "12011969";
+
+SoftwareSerial mySerial(D6, D7); // RX, TX
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println("Goodnight moon!");
+
+  Blynk.begin(auth, ssid, pass);
+
+  mySerial.begin(9600);
+
+  pinMode(V10, OUTPUT);
+}
+
+void loop(){
+
+  if (mySerial.available())
+  {
+    char a = mySerial.read();
+     switch(a)
+     {
+      case 'a': Blynk.notify("COFRE TRANCADO. <3");break;
+      case 'b': Blynk.notify("COFRE ABERTO.");break;
+      case 'c': Blynk.notify("SENHA INCORRETA.");break;
+      case 'd': Blynk.notify("SENHA INCORRETA MULTIPLAS VEZES.");break;
+     }
+  }
+ Blynk.run();
+}
